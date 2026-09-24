@@ -1,0 +1,14 @@
+.chip {
+  height: 32px; padding: 0 14px; display: inline-flex; align-items: center;
+  border: var(--border); border-radius: var(--radius-pill); background: var(--color-bg); color: var(--color-muted);
+  font-size: 13px; font-weight: var(--weight-medium);
+  transition: background var(--dur-fast) ease, color var(--dur-fast) ease, border-color var(--dur-fast) ease, padding var(--dur-base) var(--ease-bounce);
+}
+.chip:hover { border-color: var(--color-ink); }
+.check {
+  width: 0; height: 16px; border-radius: 8px; background: var(--color-surface); color: var(--color-ink);
+  display: inline-flex; align-items: center; justify-content: center; overflow: hidden; transform: scale(0);
+  transition: transform var(--dur-base) var(--ease-bounce), width var(--dur-base) var(--ease-bounce), margin var(--dur-base) var(--ease-bounce);
+}
+.on { background: var(--color-ink); color: var(--color-surface); border-color: var(--color-ink); padding-right: var(--space-2); }
+.on .check { width: 16px; margin-left: var(--space-2); transform: scale(1); }

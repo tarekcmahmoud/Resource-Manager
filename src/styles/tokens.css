@@ -1,0 +1,94 @@
+/*
+  DESIGN TOKENS — the single source of the visual language.
+  Components may only use these variables. To restyle the app,
+  change values here and check the result on /design.
+*/
+:root {
+  /* colour */
+  --color-bg: #F3F3F1;
+  --color-surface: #FFFFFF;
+  --color-ink: #1F1F1E;
+  --color-muted: #55554F;
+  --color-line: #CFCFCA;
+  --color-tone-1: #DADAD6;   /* placeholders, board chips */
+  --color-tone-2: #C4C4BF;
+  --color-cross: #BDBDB8;    /* corner crosses at rest */
+  --color-accent: #D92D20;   /* crosses on hover, destructive */
+  --color-scrim: rgba(31, 31, 30, .42);  /* over images on hover */
+  --color-veil: rgba(243, 243, 241, .9); /* behind overlays */
+
+  /* type */
+  --font-sans: var(--font-archivo), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-base: 15px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-bold: 600;
+  --leading-tight: 1.25;
+  --leading-body: 1.45;
+
+  /* space */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --gutter: clamp(16px, 3.4vw, 48px); /* page side padding */
+  --grid-gap: clamp(20px, 2.8vw, 40px);
+  --column-min: 232px;                /* wall / group column width */
+
+  /* shape */
+  --radius-none: 0;
+  --radius-pill: 999px;
+  --border: 1px solid var(--color-line);
+  --cross-size: 24px;
+
+  /* control sizes */
+  --control-sm: 30px;
+  --control-md: 40px;
+
+  /* motion */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-bounce: cubic-bezier(.175, .885, .32, 1.275);
+  --dur-fast: .15s;
+  --dur-base: .3s;
+  --dur-slow: .36s;
+  --shadow-lift: 0 18px 40px rgba(0, 0, 0, .14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #161615;
+    --color-surface: #1F1F1E;
+    --color-ink: #EDEDEA;
+    --color-muted: #A3A39D;
+    --color-line: #3A3A37;
+    --color-tone-1: #2C2C2A;
+    --color-tone-2: #3A3A37;
+    --color-cross: #55554F;
+    --color-accent: #F04438;
+    --color-scrim: rgba(0, 0, 0, .5);
+    --color-veil: rgba(22, 22, 21, .9);
+  }
+}
+:root[data-theme="dark"] {
+  --color-bg: #161615;
+  --color-surface: #1F1F1E;
+  --color-ink: #EDEDEA;
+  --color-muted: #A3A39D;
+  --color-line: #3A3A37;
+  --color-tone-1: #2C2C2A;
+  --color-tone-2: #3A3A37;
+  --color-cross: #55554F;
+  --color-accent: #F04438;
+  --color-scrim: rgba(0, 0, 0, .5);
+  --color-veil: rgba(22, 22, 21, .9);
+}

@@ -1,0 +1,14 @@
+.page { padding: var(--space-8) var(--gutter) 96px; max-width: 1100px; display: flex; flex-direction: column; gap: var(--space-10); }
+.head h1 { margin: 0 0 var(--space-2); font-size: var(--text-2xl); font-weight: var(--weight-bold); }
+.head p { margin: 0; color: var(--color-muted); }
+.section { display: flex; flex-direction: column; gap: var(--space-4); }
+.section h2 { margin: 0; font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--color-muted); text-transform: uppercase; letter-spacing: .06em; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+.swatch { display: flex; flex-direction: column; gap: 6px; font-size: var(--text-sm); }
+.swatch span { height: 56px; border: var(--border); }
+.typeRow { display: flex; align-items: baseline; gap: var(--space-6); }
+.typeRow code { width: 110px; flex-shrink: 0; font-size: var(--text-sm); color: var(--color-muted); }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4); max-width: 640px; }
+.demo { width: 180px; height: 110px; display: flex; align-items: center; justify-content: center; color: var(--color-muted); font-size: var(--text-md); }
+.page code { font-family: ui-monospace, monospace; font-size: .92em; }

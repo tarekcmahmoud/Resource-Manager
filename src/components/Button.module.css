@@ -1,0 +1,14 @@
+.btn {
+  height: var(--control-md); padding: 0 14px; display: inline-flex; align-items: center; gap: var(--space-2);
+  border: var(--border); background: var(--color-surface); color: var(--color-ink);
+  font-size: var(--text-md); font-weight: var(--weight-medium); border-radius: var(--radius-none);
+}
+.btn:hover { border-color: var(--color-ink); }
+.btn:disabled { opacity: .45; cursor: default; }
+.primary { background: var(--color-ink); color: var(--color-surface); border-color: var(--color-ink); }
+.ghost { background: transparent; border-color: transparent; }
+.danger { border-color: var(--color-accent); color: var(--color-accent); }
+.sm { height: var(--control-sm); padding: 0 var(--space-2); font-size: var(--text-sm); gap: 6px; }
+.icon { width: var(--control-md); padding: 0; justify-content: center; }
+.sm.icon { width: var(--control-sm); }
+.pressed { background: var(--color-ink); color: var(--color-surface); border-color: var(--color-ink); }

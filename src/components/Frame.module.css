@@ -1,0 +1,11 @@
+.frame { position: relative; background: var(--color-surface); }
+.cross {
+  position: absolute; width: var(--cross-size); height: var(--cross-size);
+  color: var(--color-cross); display: flex; pointer-events: none;
+  transition: color var(--dur-base) var(--ease);
+}
+.tl { top: calc(var(--cross-size) / -2); left: calc(var(--cross-size) / -2); }
+.tr { top: calc(var(--cross-size) / -2); right: calc(var(--cross-size) / -2); }
+.bl { bottom: calc(var(--cross-size) / -2); left: calc(var(--cross-size) / -2); }
+.br { bottom: calc(var(--cross-size) / -2); right: calc(var(--cross-size) / -2); }
+.interactive:hover .cross, .interactive:focus-within .cross, .active .cross { color: var(--color-accent); }

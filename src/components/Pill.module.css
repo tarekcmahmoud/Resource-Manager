@@ -1,0 +1,9 @@
+.pill {
+  display: inline-flex; align-items: center; height: 28px; border-radius: var(--radius-pill);
+  background: var(--color-surface); color: var(--color-ink); border: var(--border);
+  font-size: var(--text-sm); font-weight: var(--weight-medium); text-decoration: none; padding: 0;
+}
+.ic { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.lb { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  transition: max-width var(--dur-slow) var(--ease), padding var(--dur-slow) var(--ease), opacity .2s ease; }
+.pill:hover .lb, .pill:focus-visible .lb, .expanded .lb { max-width: 160px; padding-right: 10px; opacity: 1; }
