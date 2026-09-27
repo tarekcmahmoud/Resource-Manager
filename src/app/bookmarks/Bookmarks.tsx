@@ -11,6 +11,7 @@ import { applyColumns, slot, toColumns, type LayoutKey } from '@/lib/bookmarks/l
 import { GroupCard } from './GroupCard';
 import { BoardDialog, GroupDialog, LinkDialog, NEW, type GroupDraft, type LinkDraft } from './Dialogs';
 import { useGroupDrag } from './useGroupDrag';
+import { useColumnCount } from '@/lib/useColumnCount';
 import s from './bookmarks.module.css';
 
 const PINNED = 'pinned';
@@ -84,19 +85,7 @@ export function Bookmarks({ initial }: { initial: BookmarkData }) {
 
   /* ---------- columns ---------- */
   const grid = useRef<HTMLDivElement>(null);
-  const [n, setN] = useState(3);
-  useEffect(() => {
-    const el = grid.current!;
-    const measure = () => {
-      const gap = parseFloat(getComputedStyle(el).columnGap) || 0;
-      const min = parseFloat(getComputedStyle(el).getPropertyValue('--column-min')) || 232;
-      setN(Math.max(1, Math.min(6, Math.floor((el.clientWidth + gap) / (min + gap)))));
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+  const n = useColumnCount(grid);
   const est = useCallback((g: Group) => {
     const subs = subsByGroup.get(g.id) ?? [];
     return 96 + 36 * Math.min(LIMIT_EST, groupLinks(g.id).length) + 28 * subs.filter((x) => x.name != null).length;
