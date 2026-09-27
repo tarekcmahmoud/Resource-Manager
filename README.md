@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Resource Manager
 
-## Getting Started
+A personal tool for bookmarks (Board › Group › Sub-group › Link) and an inspiration wall. It's built with Next.js 16, Supabase and Vercel.
 
-First, run the development server:
+## Run locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Create `.env.local`, which is gitignored:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://nocqkkfeldiwecppbjqt.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<publishable key, sb_publishable_…>
+   ```
+2. `npm install`, then `npm run dev`, then open http://localhost:3000.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Never use the secret or service_role key here: variables that start with `NEXT_PUBLIC_` end up in the browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run each file in `supabase/migrations/` once, in order, in the Supabase SQL Editor. Sign-in uses email and password. Create the account in Supabase → Authentication → Users, and only emails listed in `allowed_emails` can sign up.
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
+Vercel builds `main` on every push. Set both variables in Vercel → Settings → Environment Variables, then redeploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things are
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| What | Where |
+| --- | --- |
+| Design tokens (all styling goes through these) | `src/styles/tokens.css`, style guide at `/design` |
+| Shared components | `src/components/` |
+| Bookmarks page | `src/app/bookmarks/` |
+| Bookmark data, layout and starter seed | `src/lib/bookmarks/`, `src/data/bookmarks-seed.json` |
+| Sign-in and session refresh | `src/app/login/`, `src/proxy.ts` |

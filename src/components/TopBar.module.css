@@ -1,0 +1,12 @@
+.top { height: 64px; padding: 0 var(--gutter); display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); border-bottom: var(--border); }
+.mark { font-size: var(--text-lg); font-weight: var(--weight-bold); white-space: nowrap; }
+.nav { display: flex; gap: var(--space-1); }
+.nav a { height: 36px; padding: 0 var(--space-3); display: flex; align-items: center; font-weight: var(--weight-medium); text-decoration: none; border: 1px solid transparent; color: var(--color-muted); }
+.nav a:hover { color: var(--color-ink); }
+.nav a[aria-current] { border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink); font-weight: var(--weight-bold); }
+.actions { display: flex; align-items: center; gap: var(--space-2); }
+
+@media (max-width: 640px) {
+  .top { gap: var(--space-2); }
+  .mark { display: none; }
+}

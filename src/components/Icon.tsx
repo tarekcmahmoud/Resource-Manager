@@ -7,6 +7,8 @@ const PATHS = {
   chev: <path d="M6 9l6 6 6-6" />,
   left: <path d="M15 6l-6 6 6 6" />,
   right: <path d="M9 6l6 6-6 6" />,
+  up: <path d="M6 15l6-6 6 6" />,
+  down: <path d="M6 9l6 6 6-6" />,
   play: <path d="M8 5l11 7-11 7z" />,
   pin: <><path d="M12 17v5" /><path d="M9 3h6l-1 6 4 4H6l4-4z" /></>,
   edit: <><path d="M4 20h4L19 9l-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></>,
