@@ -85,7 +85,7 @@ export function Bookmarks({ initial }: { initial: BookmarkData }) {
 
   /* ---------- columns ---------- */
   const grid = useRef<HTMLDivElement>(null);
-  const n = useColumnCount(grid);
+  const { n } = useColumnCount(grid);
   const est = useCallback((g: Group) => {
     const subs = subsByGroup.get(g.id) ?? [];
     return 96 + 36 * Math.min(LIMIT_EST, groupLinks(g.id).length) + 28 * subs.filter((x) => x.name != null).length;

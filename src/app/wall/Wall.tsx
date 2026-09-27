@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { TopBar } from '@/components/TopBar';
 import { Button } from '@/components/Button';
@@ -7,7 +7,7 @@ import { Chip } from '@/components/Chip';
 import { Icon } from '@/components/Icon';
 import { useToast } from '@/components/Toast';
 import { useColumnCount } from '@/lib/useColumnCount';
-import { BUCKET, estHeight, mediaPaths, TYPES, type SubType, type Submission } from '@/lib/wall/data';
+import { BUCKET, mediaPaths, TYPES, type SubType, type Submission } from '@/lib/wall/data';
 import { Card, type Urls } from './Card';
 import { FocusView } from './FocusView';
 import { draftFrom, SubmissionForm, type Draft } from './SubmissionForm';
@@ -58,17 +58,45 @@ export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
     toast('Shuffled. Refresh the page to go back to newest first.');
   }
 
-  /* ---------- columns: each card goes to the shortest column ---------- */
+  /* ---------- masonry: each card goes to the lowest open spot; wide cards need two neighbouring columns ---------- */
   const grid = useRef<HTMLDivElement>(null);
-  const n = useColumnCount(grid);
-  const cols = useMemo(() => {
-    const out: Submission[][] = Array.from({ length: n }, () => []), h = new Array(n).fill(0);
+  const { n, width, gap } = useColumnCount(grid);
+  const colW = width ? (width - (n - 1) * gap) / n : 0;
+  const slots = useRef(new Map<string, HTMLDivElement>());
+  const placed = useRef(false);
+
+  // Positions are written straight to the DOM: they depend on measured card heights.
+  const layout = useCallback(() => {
+    const el = grid.current;
+    if (!el || !colW) return;
+    const rowGap = parseFloat(getComputedStyle(el).rowGap) || 0;
+    const h = new Array(n).fill(0);
     for (const x of visible) {
-      const c = h.indexOf(Math.min(...h));
-      out[c].push(x); h[c] += estHeight(x) + 0.15;
+      const slot = slots.current.get(x.id);
+      if (!slot) continue;
+      const span = Math.min(x.span ?? 1, n);
+      let col = 0, top = Infinity;
+      for (let c = 0; c <= n - span; c++) {
+        const t = Math.max(...h.slice(c, c + span));
+        if (t < top - 0.5) { top = t; col = c; }
+      }
+      slot.style.transform = `translate(${col * (colW + gap)}px, ${top}px)`;
+      slot.style.visibility = 'visible';
+      for (let c = col; c < col + span; c++) h[c] = top + slot.offsetHeight + rowGap;
     }
-    return out;
-  }, [visible, n]);
+    el.style.height = `${Math.max(0, Math.max(...h) - rowGap)}px`;
+    // Animate moves only after the first placement, so the page doesn't fly in on load.
+    if (!placed.current) requestAnimationFrame(() => el.dataset.placed = '');
+    placed.current = true;
+  }, [visible, n, colW, gap]);
+
+  useLayoutEffect(layout, [layout]);
+  useEffect(() => {
+    // Card heights change when fonts load or text wraps differently.
+    const ro = new ResizeObserver(() => layout());
+    slots.current.forEach((x) => ro.observe(x));
+    return () => ro.disconnect();
+  }, [layout]);
 
   /* ---------- files dropped anywhere on the wall open the form ---------- */
   useEffect(() => {
@@ -112,6 +140,11 @@ export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
     setSubs((x) => x.map((y) => (y.id === sub.id ? { ...y, archived } : y)));
     toast(archived ? 'Archived. Tick Show archived to find it again.' : 'Unarchived.');
     write('the change', db.from('submissions').update({ archived, updated_at: new Date().toISOString() }).eq('id', sub.id));
+  }
+
+  function setSpan(sub: Submission, span: 1 | 2) {
+    setSubs((x) => x.map((y) => (y.id === sub.id ? { ...y, span } : y)));
+    write('the width', db.from('submissions').update({ span, updated_at: new Date().toISOString() }).eq('id', sub.id));
   }
 
   function remove(sub: Submission) {
@@ -178,18 +211,22 @@ export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
               ? <><strong>Nothing matches these filters</strong>Clear a filter, or add a new submission.</>
               : <><strong>The wall is empty</strong>Use New submission, or drop images anywhere on this page.</>}
           </div>
-        ) : cols.map((c, i) => (
-          <div key={i} className={s.col}>
-            {c.map((x) => <Card key={x.id} sub={x} urls={urls} onOpen={() => setFocus(x.id)} onTag={addTagFilter} />)}
-          </div>
-        ))}
+        ) : visible.map((x) => {
+          const span = Math.min(x.span ?? 1, n);
+          return (
+            <div key={x.id} className={s.slot} style={{ width: span * colW + (span - 1) * gap || undefined }}
+              ref={(el) => { if (el) slots.current.set(x.id, el); else slots.current.delete(x.id); }}>
+              <Card sub={x} urls={urls} onOpen={() => setFocus(x.id)} onTag={addTagFilter} />
+            </div>
+          );
+        })}
       </div>
 
       {focused && (
         <FocusView key={focused.id} sub={focused} urls={urls} hasPrev={fi > 0} hasNext={fi >= 0 && fi < visible.length - 1}
           onPrev={() => fi > 0 && setFocus(visible[fi - 1].id)} onNext={() => fi < visible.length - 1 && setFocus(visible[fi + 1].id)}
           onClose={() => setFocus(null)} onEdit={() => { setFocus(null); setForm({ existing: focused, draft: draftFrom(focused) }); }}
-          onArchive={() => toggleArchive(focused)} onDelete={() => remove(focused)}
+          onArchive={() => toggleArchive(focused)} onDelete={() => remove(focused)} onSpan={(sp) => setSpan(focused, sp)}
           onTag={(t) => { setFocus(null); addTagFilter(t); }} />
       )}
       {form && (

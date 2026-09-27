@@ -1,5 +1,6 @@
 'use client';
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
+import { fetchPageInfo } from '@/lib/pageInfo';
 import { Dialog } from '@/components/Dialog';
 import { Field, SelectField } from '@/components/Field';
 import { Button } from '@/components/Button';
@@ -25,6 +26,22 @@ export function LinkDialog({ data, link, initial, onSave, onDelete, onClose }: {
   const [err, setErr] = useState('');
   const [armed, setArmed] = useState(false);
   const set = (patch: Partial<LinkDraft>) => setD((x) => ({ ...x, ...patch }));
+  const [looking, setLooking] = useState(false);
+  const asked = useRef('');
+
+  /** Fills an empty name from the page's title once the link is complete. */
+  function lookUp(raw: string) {
+    let url = raw.trim();
+    if (!url || d.name.trim() || asked.current === url) return;
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    if (!/^https?:\/\/[^/\s]+\.[^/\s]+/i.test(url)) return;
+    asked.current = raw.trim();
+    setLooking(true);
+    fetchPageInfo(url)
+      .then((info) => setD((x) => (x.name.trim() || x.url.trim() !== raw.trim() ? x : { ...x, name: info.title || info.siteName })))
+      .catch(() => { /* the name falls back to the site address on save */ })
+      .finally(() => setLooking(false));
+  }
 
   const groups = data.groups.filter((g) => g.board_id === d.boardId).sort((a, b) => a.name.localeCompare(b.name));
   const subs = data.subgroups.filter((x) => x.group_id === d.groupId && x.name != null);
@@ -50,9 +67,11 @@ export function LinkDialog({ data, link, initial, onSave, onDelete, onClose }: {
   return (
     <Dialog title={link ? 'Edit bookmark' : 'Add bookmark'} onClose={onClose}>
       <form className={s.form} onSubmit={submit}>
-        <Field label="Link" value={d.url} onChange={(e) => set({ url: e.target.value })} placeholder="https://" inputMode="url" autoFocus />
+        <Field label="Link" value={d.url} onChange={(e) => set({ url: e.target.value })} placeholder="https://" inputMode="url" autoFocus
+          onBlur={(e) => lookUp(e.target.value)} onPaste={(e) => { const t = e.clipboardData.getData('text'); setTimeout(() => lookUp(t), 0); }} />
         {dupe && <div className={s.dupe}>This link is already saved in {dupeWhere}.</div>}
-        <Field label="Name" value={d.name} onChange={(e) => set({ name: e.target.value })} placeholder="Uses the site name if left empty" />
+        <Field label="Name" value={d.name} onChange={(e) => set({ name: e.target.value })}
+          placeholder={looking ? 'Looking up the page title…' : 'Uses the page title if left empty'} />
         <Field label="Note" value={d.note} onChange={(e) => set({ note: e.target.value })} placeholder="One line on why it is useful (optional)" />
         <SelectField label="Board" value={d.boardId} onChange={(e) => {
           const g = data.groups.filter((x) => x.board_id === e.target.value).sort((a, b) => a.name.localeCompare(b.name))[0];

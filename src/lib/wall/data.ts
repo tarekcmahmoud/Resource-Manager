@@ -18,6 +18,7 @@ export type Block =
 export type Submission = {
   id: string; type: SubType; title: string; source: string; notes: string;
   tags: string[]; boards: string[]; blocks: Block[]; archived: boolean;
+  span: 1 | 2; // wall columns the card spans
   saved_at: string; updated_at: string;
 };
 
@@ -26,7 +27,7 @@ const SIGNED_FOR = 60 * 60 * 24; // seconds; the page refreshes them on each loa
 
 export async function loadSubmissions(db: SupabaseClient) {
   const { data, error } = await db.from('submissions')
-    .select('id,type,title,source,notes,tags,boards,blocks,archived,saved_at,updated_at')
+    .select('id,type,title,source,notes,tags,boards,blocks,archived,span,saved_at,updated_at')
     .order('saved_at', { ascending: false });
   if (error) throw new Error(error.message);
   return data as Submission[];
@@ -78,19 +79,6 @@ export function videoInfo(url: string): { embed: string; thumb?: string; site: s
 
 export const isVideoFile = (b: { mime?: string; url?: string; path?: string }) =>
   b.mime?.startsWith('video/') || /\.(mp4|webm|mov)(\?|$)/i.test(b.url ?? b.path ?? '');
-
-/** Rough card height in column widths, for placing cards in the shortest column. */
-export function estHeight(s: Submission) {
-  let h = 0.12;
-  for (const b of s.blocks) {
-    if (b.kind === 'images') for (const im of b.images) h += im.ratio + 0.02;
-    if (b.kind === 'video') h += 0.5625;
-    if (b.kind === 'anim') h += b.ratio ?? 0.75;
-    if (b.kind === 'quote') h += 0.12 + b.text.length / (s.type === 'quote' ? 90 : 160);
-    if (b.kind === 'text') h += 0.35;
-  }
-  return h;
-}
 
 /** The title a card shows when none was given. */
 export function fallbackTitle(source: string, blocks: Block[]) {

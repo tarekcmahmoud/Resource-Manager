@@ -11,21 +11,24 @@ import {
   type Block, type SubType, type Submission,
 } from '@/lib/wall/data';
 import { srcOf, type Urls } from './Card';
+import { fetchPageInfo, importImage } from '@/lib/pageInfo';
 import s from './wall.module.css';
 
 const MAX_MB = 20;
 const uuid = () => crypto.randomUUID();
 
 type DImg = { id: string; path?: string; url?: string; ratio: number; preview?: string; uploading?: boolean };
+/** Images found on a pasted page link, to pick from. */
+type PageFind = { status: 'loading' | 'done' | 'error'; url: string; site: string; found: { id: string; url: string }[]; error?: string };
 type DBlock =
-  | { id: string; kind: 'images'; images: DImg[] }
+  | { id: string; kind: 'images'; images: DImg[]; page?: PageFind }
   | { id: string; kind: 'video'; url: string }
   | { id: string; kind: 'anim'; path?: string; url?: string; ratio?: number; mime?: string; preview?: string; uploading?: boolean }
   | { id: string; kind: 'text'; text: string }
   | { id: string; kind: 'quote'; text: string; attr: string };
 type Kind = DBlock['kind'];
 export type Draft = {
-  variant: 'quick' | 'extended'; type: SubType; title: string; source: string; notes: string;
+  variant: 'quick' | 'extended'; type: SubType; span: 1 | 2; title: string; source: string; notes: string;
   tags: string[]; boards: string[]; blocks: DBlock[];
 };
 
@@ -35,9 +38,9 @@ const blank = (kind: Kind): DBlock =>
     : kind === 'text' ? { id: uuid(), kind, text: '' } : { id: uuid(), kind, url: '' } as DBlock;
 
 export function draftFrom(sub: Submission | null): Draft {
-  if (!sub) return { variant: 'quick', type: 'project', title: '', source: '', notes: '', tags: [], boards: [], blocks: [blank('images')] };
+  if (!sub) return { variant: 'quick', type: 'project', span: 1, title: '', source: '', notes: '', tags: [], boards: [], blocks: [blank('images')] };
   return {
-    variant: 'extended', type: sub.type, title: sub.title, source: sub.source, notes: sub.notes,
+    variant: 'extended', type: sub.type, span: sub.span ?? 1, title: sub.title, source: sub.source, notes: sub.notes,
     tags: [...sub.tags], boards: [...sub.boards],
     blocks: sub.blocks.map((b): DBlock => {
       if (b.kind === 'images') return { id: uuid(), kind: 'images', images: b.images.map((im) => ({ ...im, id: uuid() })) };
@@ -104,6 +107,12 @@ export function SubmissionForm(p: Props) {
 
   const set = (patch: Partial<Draft>) => setD((x) => ({ ...x, ...patch }));
   const setBlock = (id: string, fn: (b: DBlock) => DBlock) => setD((x) => ({ ...x, blocks: x.blocks.map((b) => (b.id === id ? fn(b) : b)) }));
+  /** Adds or removes an image in an images block by id. */
+  const patchImg = (id: string, patch: Partial<DImg> | null) => setD((x) => ({
+    ...x, blocks: x.blocks.map((b) => (b.kind === 'images' && b.images.some((i) => i.id === id)
+      ? { ...b, images: patch ? b.images.map((i) => (i.id === id ? { ...i, ...patch } : i)) : b.images.filter((i) => i.id !== id) } : b)),
+  }));
+
 
   /* ---------- uploads ---------- */
   async function upload(file: File) {
@@ -135,13 +144,9 @@ export function SubmissionForm(p: Props) {
         const blocks = target ? x.blocks : [...x.blocks, (target = blank('images'))];
         return { ...x, blocks: blocks.map((b) => (b.id === target!.id && b.kind === 'images' ? { ...b, images: [...b.images, { id, ratio: 0.75, preview, uploading: true }] } : b)) };
       });
-      const patchImg = (patch: Partial<DImg> | null) => setD((x) => ({
-        ...x, blocks: x.blocks.map((b) => (b.kind === 'images' && b.images.some((i) => i.id === id)
-          ? { ...b, images: patch ? b.images.map((i) => (i.id === id ? { ...i, ...patch } : i)) : b.images.filter((i) => i.id !== id) } : b)),
-      }));
-      measure(preview, false).then((ratio) => patchImg({ ratio }));
-      upload(f).then((path) => patchImg({ path, uploading: false }))
-        .catch((e) => { p.toast(`Couldn't upload ${f.name}. ${e.message}`); patchImg(null); });
+      measure(preview, false).then((ratio) => patchImg(id, { ratio }));
+      upload(f).then((path) => patchImg(id, { path, uploading: false }))
+        .catch((e) => { p.toast(`Couldn't upload ${f.name}. ${e.message}`); patchImg(id, null); });
     }
     setErr('');
   }
@@ -154,26 +159,50 @@ export function SubmissionForm(p: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** A pasted or typed address: image and animation files are added; other pages become the source. */
+  /** Copies an image from another site into storage, showing it straight away while it copies. */
+  function importInto(blockId: string, id: string, url: string, referer?: string) {
+    setBlock(blockId, (b) => (b.kind === 'images' ? { ...b, images: [...b.images, { id, ratio: 0.75, preview: url, uploading: true }] } : b));
+    measure(url, false).then((ratio) => patchImg(id, { ratio }));
+    importImage(url, referer).then((r) => {
+      uploaded.current.push(r.path);
+      setSigned((x) => ({ ...x, [r.path]: r.url }));
+      patchImg(id, { path: r.path, uploading: false });
+    }).catch((e) => { p.toast(`Couldn't copy that image. ${e.message}`); patchImg(id, null); });
+  }
+
+  /** A pasted or typed address: image and animation files are copied in; pages are read for their images. */
   function addLink(blockId: string, raw: string) {
     let url = raw.trim();
     if (!url) return;
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-    if (/\.(gif|mp4|webm)(\?.*)?$/i.test(url)) {
+    if (/\.(gif|mp4)(\?.*)?$/i.test(url)) {
       const id = uuid();
-      setD((x) => ({ ...x, blocks: [...x.blocks, { id, kind: 'anim', url }] }));
-      measure(url, /\.(mp4|webm)/i.test(url)).then((ratio) => setBlock(id, (b) => ({ ...b, ratio })));
-      p.toast('Animation link added as its own block.');
+      setD((x) => ({ ...x, blocks: [...x.blocks, { id, kind: 'anim', preview: url, uploading: true }] }));
+      measure(url, /\.mp4/i.test(url)).then((ratio) => setBlock(id, (b) => ({ ...b, ratio })));
+      importImage(url).then((r) => {
+        uploaded.current.push(r.path);
+        setSigned((x) => ({ ...x, [r.path]: r.url }));
+        setBlock(id, (b) => ({ ...b, path: r.path, mime: r.mime, uploading: false }));
+      }).catch((e) => { p.toast(`Couldn't copy that animation. ${e.message}`); setD((x) => ({ ...x, blocks: x.blocks.filter((b) => b.id !== id) })); });
       return;
     }
-    if (/\.(png|jpe?g|webp|avif|svg)(\?.*)?$/i.test(url)) {
-      const id = uuid();
-      setBlock(blockId, (b) => (b.kind === 'images' ? { ...b, images: [...b.images, { id, url, ratio: 0.75 }] } : b));
-      measure(url, false).then((ratio) => setBlock(blockId, (b) => (b.kind === 'images' ? { ...b, images: b.images.map((i) => (i.id === id ? { ...i, ratio } : i)) } : b)));
-      return;
-    }
+    if (/\.(png|jpe?g|webp|avif)(\?.*)?$/i.test(url)) { importInto(blockId, uuid(), url); return; }
+
     if (!d.source) set({ source: url });
-    p.toast('Saved as the source link. Picking images from a page arrives in stage 4; for now, drop or paste the images themselves.');
+    const site = url.replace(/^https?:\/\/(www\.)?/i, '').split('/')[0];
+    setBlock(blockId, (b) => (b.kind === 'images' ? { ...b, page: { status: 'loading', url, site, found: [] } } : b));
+    fetchPageInfo(url).then((info) => {
+      setD((x) => ({ ...x, title: x.title || info.title }));
+      setBlock(blockId, (b) => (b.kind === 'images' ? {
+        ...b, page: { status: 'done', url: info.url, site: info.siteName || site, found: info.images.map((u) => ({ id: uuid(), url: u })) },
+      } : b));
+    }).catch((e) => setBlock(blockId, (b) => (b.kind === 'images' ? { ...b, page: { status: 'error', url, site, found: [], error: e.message } } : b)));
+  }
+
+  /** Picking a found image copies it in; picking it again takes it out. */
+  function togglePick(b: Extract<DBlock, { kind: 'images' }>, f: { id: string; url: string }) {
+    if (b.images.some((i) => i.id === f.id)) patchImg(f.id, null);
+    else importInto(b.id, f.id, f.url, b.page?.url);
   }
 
   function onPaste(e: ClipboardEvent, blockId: string) {
@@ -270,7 +299,7 @@ export function SubmissionForm(p: Props) {
     const sub: Submission = {
       id: p.existing?.id ?? uuid(), type: d.type, title: d.title.trim() || fallbackTitle(d.source.trim(), blocks),
       source: d.source.trim(), notes: d.notes.trim(), tags: d.tags, boards: d.boards, blocks,
-      archived: p.existing?.archived ?? false, saved_at: p.existing?.saved_at ?? now, updated_at: now,
+      archived: p.existing?.archived ?? false, span: d.span, saved_at: p.existing?.saved_at ?? now, updated_at: now,
     };
     const kept = new Set(mediaPaths(blocks));
     const removed = [...(p.existing ? mediaPaths(p.existing.blocks) : []), ...uploaded.current].filter((x) => !kept.has(x));
@@ -289,7 +318,7 @@ export function SubmissionForm(p: Props) {
           <div className={s.dropEmpty}>
             <Icon name="upload" size={22} />
             <b>Drop images here</b>
-            <span>Paste an image with ⌘V, or paste an image link below.</span>
+            <span>Paste an image with ⌘V, or paste a page link below to pick from its images.</span>
             <Button size="sm" onClick={() => { fileFor.current = b.id; fileInput.current?.click(); }}>Browse files</Button>
           </div>
           <label className={s.linkf}>
@@ -300,6 +329,30 @@ export function SubmissionForm(p: Props) {
             </span>
           </label>
         </div>
+        {b.page && (
+          <div className={s.found}>
+            <div className={s.stripHead}>
+              <span><b>{b.page.site}</b> {b.page.status === 'loading' ? 'Looking for images…' : b.page.status === 'error' ? b.page.error : `${b.page.found.length} image${b.page.found.length === 1 ? '' : 's'} found. Pick the ones to keep.`}</span>
+              {b.page.status !== 'loading' && (
+                <button type="button" className={s.clear} onClick={() => setBlock(b.id, (x) => (x.kind === 'images' ? { ...x, page: undefined } : x))}>Clear</button>
+              )}
+            </div>
+            <div className={s.pgrid}>
+              {b.page.status === 'loading' && Array.from({ length: 8 }, (_, k) => <span key={k} className={`${s.tile} ${s.skel}`} aria-hidden="true" />)}
+              {b.page.found.map((f) => {
+                const at = b.images.findIndex((i) => i.id === f.id);
+                return (
+                  <button key={f.id} type="button" className={s.tile} aria-pressed={at >= 0} onClick={() => togglePick(b, f)}
+                    aria-label={`Image from the page${at >= 0 ? `, position ${at + 1}` : ''}`}>
+                    <img src={f.url} alt="" loading="lazy" referrerPolicy="no-referrer"
+                      onError={(e) => { (e.currentTarget.parentElement as HTMLElement).hidden = true; }} />
+                    {at >= 0 ? <span className={s.num}>{at + 1}</span> : <span className={s.ring} />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {b.images.length > 0 && (
           <div className={s.strip}>
             <div className={s.stripHead}><b>In wall order</b><span>Drag to reorder</span></div>
@@ -379,6 +432,13 @@ export function SubmissionForm(p: Props) {
             <Sect n="1" title="Type">
               <div className={`${s.seg} ${s.segWide}`} role="group" aria-label="Submission type">
                 {TYPES.map(([k, label]) => <button key={k} type="button" aria-pressed={d.type === k} onClick={() => set({ type: k })}>{label}</button>)}
+              </div>
+            </Sect>
+            <Sect n="" title="Width on the wall">
+              <div className={`${s.seg} ${s.segWide}`} role="group" aria-label="Width on the wall">
+                {([1, 2] as const).map((n) => (
+                  <button key={n} type="button" aria-pressed={d.span === n} onClick={() => set({ span: n })}>{n} column{n > 1 ? 's' : ''}</button>
+                ))}
               </div>
             </Sect>
             <Sect n="2" title="Title">
