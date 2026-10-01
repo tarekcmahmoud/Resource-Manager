@@ -10,3 +10,4 @@
   .top { gap: var(--space-2); }
   .mark { display: none; }
 }
+.signIn { font-size: var(--text-md); font-weight: var(--weight-medium); text-decoration: underline; text-underline-offset: 3px; }

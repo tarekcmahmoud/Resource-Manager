@@ -12,3 +12,4 @@
 .icon { width: var(--control-md); padding: 0; justify-content: center; }
 .sm.icon { width: var(--control-sm); }
 .pressed { background: var(--color-ink); color: var(--color-surface); border-color: var(--color-ink); }
+.link { text-decoration: none; }

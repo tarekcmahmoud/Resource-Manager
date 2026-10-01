@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PUBLIC = ['/login', '/auth/callback', '/design'];
+// Pages anyone can open. /dev and /downloads are for collaborators and hold no personal data.
+const PUBLIC = ['/login', '/auth/callback', '/design', '/dev', '/downloads'];
 
 /** Refreshes the Supabase session on every request and sends signed-out visitors to /login. */
 export async function proxy(request: NextRequest) {
