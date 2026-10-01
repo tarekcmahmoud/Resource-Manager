@@ -170,7 +170,13 @@ function draw() {
       ? el('div', { class: 'grid' }, state.images.map((im) => {
         const at = state.picked.indexOf(im.url);
         return el('button', { type: 'button', class: 'tile', 'data-tile': im.url, 'aria-pressed': String(at >= 0), 'aria-label': at >= 0 ? `Picked, position ${at + 1}` : 'Pick image', onclick: () => togglePick(im.url) },
-          el('img', { src: im.url, 'data-src': im.url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer', onerror: (e) => { if (!state.picked.includes(im.url)) e.target.closest('.tile').hidden = true; } }),
+          el('img', {
+            src: im.url, 'data-src': im.url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer',
+            onerror: (e) => { if (!state.picked.includes(im.url)) e.target.closest('.tile').hidden = true; },
+            // Pixel size of the file, shown in the corner once it loads.
+            onload: (e) => { const i = e.target; if (i.naturalWidth) i.parentElement.querySelector('.res').textContent = `${i.naturalWidth}×${i.naturalHeight}`; },
+          }),
+          el('span', { class: 'res', text: im.w ? `${im.w}×${im.h}` : '' }),
           at >= 0 ? el('span', { class: 'num', text: String(at + 1) }) : el('span', { class: 'ring' }));
       }))
       : el('p', { class: 'none', text: 'No images found on this page. You can still save it.' }),

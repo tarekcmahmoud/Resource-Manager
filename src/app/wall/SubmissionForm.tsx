@@ -355,7 +355,7 @@ export function SubmissionForm(p: Props) {
                 return (
                   <button key={f.id} type="button" className={s.tile} aria-pressed={at >= 0} onClick={() => togglePick(b, f)}
                     aria-label={`Image from the page${at >= 0 ? `, position ${at + 1}` : ''}`}>
-                    <img src={f.url} alt="" loading="lazy" referrerPolicy="no-referrer"
+                    <SizedImg src={f.url} loading="lazy" referrerPolicy="no-referrer"
                       onError={(e) => { (e.currentTarget.parentElement as HTMLElement).hidden = true; }} />
                     {at >= 0 ? <span className={s.num}>{at + 1}</span> : <span className={s.ring} />}
                   </button>
@@ -372,7 +372,7 @@ export function SubmissionForm(p: Props) {
                 <div key={im.id} className={[s.th, over === im.id && s.over].filter(Boolean).join(' ')} draggable data-th={im.id}
                   onDragStart={(e) => { dragTh.current = { block: b.id, id: im.id }; e.dataTransfer.effectAllowed = 'move'; }}
                   onDragEnd={() => { dragTh.current = null; setOver(null); }}>
-                  {preview(im) && <img src={preview(im)} alt="" />}
+                  {preview(im) && <SizedImg src={preview(im)!} />}
                   <span className={s.num}>{k + 1}</span>
                   {im.uploading && <span className={s.uploading} aria-label="Uploading" />}
                   <button type="button" onClick={() => setBlock(b.id, (x) => (x.kind === 'images' ? { ...x, images: x.images.filter((i) => i.id !== im.id) } : x))}
@@ -556,6 +556,17 @@ export function SubmissionForm(p: Props) {
         }} />
       </div>
     </Dialog>
+  );
+}
+
+/** A preview image with its pixel size in the bottom-right corner, once it has loaded. */
+function SizedImg(props: Omit<React.ImgHTMLAttributes<HTMLImageElement>, 'alt'> & { src: string }) {
+  const [size, setSize] = useState('');
+  return (
+    <>
+      <img {...props} alt="" onLoad={(e) => { const i = e.currentTarget; if (i.naturalWidth) setSize(`${i.naturalWidth}×${i.naturalHeight}`); }} />
+      {size && <span className={s.res}>{size}</span>}
+    </>
   );
 }
 

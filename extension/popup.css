@@ -53,3 +53,5 @@ textarea.inp { height: auto; min-height: 56px; padding: var(--space-2) var(--spa
 .btn.primary { background: var(--color-ink); color: var(--color-surface); border-color: var(--color-ink); }
 .btn:disabled { opacity: .5; cursor: default; }
 .err { margin: 0; font-size: var(--text-sm); color: var(--color-accent); }
+.res { position: absolute; right: 3px; bottom: 3px; padding: 1px 4px; background: rgba(31, 31, 30, .55); color: #fff; font-size: 10px; line-height: 14px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.res:empty { display: none; }
