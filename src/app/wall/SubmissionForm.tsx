@@ -81,6 +81,8 @@ function measure(src: string, video: boolean): Promise<number> {
 
 type Props = {
   db: SupabaseClient; userId: string; existing: Submission | null; initial: Draft; initialFiles?: File[]; initialUploads?: string[];
+  /** From the Chrome extension: a page to read for images, and/or one image to copy in. */
+  prefill?: { page?: string; image?: string };
   urls: Urls; all: Submission[]; tagOptions: string[]; boardOptions: string[];
   onSave: (sub: Submission, newUrls: Urls, removedPaths: string[]) => void;
   onCancel: (draft: Draft, uploaded: string[]) => void;
@@ -153,9 +155,18 @@ export function SubmissionForm(p: Props) {
 
   // Files dropped on the wall open the form with them.
   const initialFiles = useRef(p.initialFiles);
+  const prefill = useRef(p.prefill);
   useEffect(() => {
     if (initialFiles.current?.length) addFiles(initialFiles.current);
     initialFiles.current = undefined;
+    const pre = prefill.current, block = p.initial.blocks.find((b) => b.kind === 'images')?.id;
+    prefill.current = undefined;
+    if (pre && block) {
+      // An image the browser can't hand over (inline data, a blob) falls back to reading the page.
+      if (pre.image && /^https?:/i.test(pre.image)) importInto(block, uuid(), pre.image, pre.page);
+      else if (pre.page && /^https?:/i.test(pre.page)) addLink(block, pre.page);
+      if (pre.image && !/^https?:/i.test(pre.image)) p.toast("That image can't be copied directly. Pick it from the page's images instead.");
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

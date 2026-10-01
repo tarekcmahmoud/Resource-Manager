@@ -19,8 +19,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   const path = request.nextUrl.pathname;
   if (!user && !PUBLIC.some((p) => path.startsWith(p))) {
+    // Come back to the same page after signing in (the extension's /save window relies on this).
     const url = request.nextUrl.clone();
     url.pathname = '/login';
+    url.search = path === '/' ? '' : `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
   return response;

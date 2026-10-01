@@ -17,8 +17,9 @@ export default function LoginPage() {
     setError(''); setBusy(true);
     const { error } = await createClient().auth.signInWithPassword({ email: email.trim(), password });
     if (error) { setError(error.message); setBusy(false); return; }
-    // Full navigation so the proxy sees the new session cookie.
-    window.location.assign('/');
+    // Full navigation so the proxy sees the new session cookie. Only same-site paths are followed.
+    const next = new URLSearchParams(window.location.search).get('next') ?? '';
+    window.location.assign(/^\/(?![/\\])/.test(next) ? next : '/');
   }
 
   return (

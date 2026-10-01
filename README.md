@@ -21,6 +21,16 @@ Run each file in `supabase/migrations/` once, in order, in the Supabase SQL Edit
 
 Vercel builds `main` on every push. Set both variables in Vercel → Settings → Environment Variables, then redeploy.
 
+## Chrome extension
+
+The `extension/` folder is a Chrome extension that saves the page you're on, a link or an image to the wall without leaving the page.
+
+1. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose the `extension` folder.
+2. The settings page opens. Paste the app's address (the stable Vercel one), click Save, and choose **Allow** when Chrome asks.
+3. To save, use the toolbar button or ⌥⇧S for the page you're on, or right-click an image or link. A panel opens under the toolbar: pick images, then add a note and tags. Boards are added later from the full form or Edit on the wall.
+
+The panel reads images from the page as it's shown, and saves through `/api/ext/*` using your normal sign-in cookie, so the extension holds no keys. "Full form" opens the app's `/save` page for quotes, text and other blocks. After you change files in `extension/`, click the reload icon on its card in `chrome://extensions`.
+
 ## Where things are
 
 | What | Where |
@@ -30,3 +40,5 @@ Vercel builds `main` on every push. Set both variables in Vercel → Settings �
 | Bookmarks page | `src/app/bookmarks/` |
 | Bookmark data, layout and starter seed | `src/lib/bookmarks/`, `src/data/bookmarks-seed.json` |
 | Sign-in and session refresh | `src/app/login/`, `src/proxy.ts` |
+| Wall, submission form, page reading | `src/app/wall/`, `src/app/api/`, `src/lib/wall/`, `src/lib/server/` |
+| Chrome extension and its save page | `extension/`, `src/app/save/` |

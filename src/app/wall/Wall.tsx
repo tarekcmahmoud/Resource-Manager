@@ -17,8 +17,8 @@ type Filters = { board: string; tags: string[]; type: SubType | ''; archived: bo
 const NO_FILTERS: Filters = { board: '', tags: [], type: '', archived: false };
 type Form = { existing: Submission | null; draft: Draft; files?: File[]; uploaded?: string[] };
 
-export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
-  initial: Submission[]; initialUrls: Urls; userId: string; bookmarkBoards: string[];
+export function Wall({ initial, initialUrls, userId, bookmarkBoards, initialFocus }: {
+  initial: Submission[]; initialUrls: Urls; userId: string; bookmarkBoards: string[]; initialFocus?: string;
 }) {
   const db = useMemo(() => createClient(), []);
   const [subs, setSubs] = useState(initial);
@@ -26,7 +26,7 @@ export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
   const [f, setF] = useState<Filters>(NO_FILTERS);
   const [panel, setPanel] = useState<'' | 'board' | 'tags'>('');
   const [order, setOrder] = useState<string[] | null>(null);
-  const [focus, setFocus] = useState<string | null>(null);
+  const [focus, setFocus] = useState<string | null>(initialFocus ?? null); // /wall?open=<id> opens one
   const [form, setForm] = useState<Form | null>(null);
   const { toast, toastNode } = useToast();
 
