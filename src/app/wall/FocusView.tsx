@@ -12,7 +12,7 @@ import s from './wall.module.css';
 type Props = {
   sub: Submission; urls: Urls; hasPrev: boolean; hasNext: boolean;
   onPrev: () => void; onNext: () => void; onClose: () => void;
-  onEdit: () => void; onArchive: () => void; onDelete: () => void; onTag: (t: string) => void; onSpan: (span: 1 | 2) => void;
+  onEdit: () => void; onArchive: () => void; onDelete: () => void; onTag: (t: string) => void; onSpan: (span: 1 | 2 | 3) => void;
 };
 
 /** One submission, full size, with its details beside it. Left and right arrows step through the wall. */
@@ -77,7 +77,7 @@ export function FocusView(p: Props) {
             )}
             <Section label="Width on the wall">
               <div className={s.seg} role="group" aria-label="Width on the wall">
-                {([1, 2] as const).map((n) => (
+                {([1, 2, 3] as const).map((n) => (
                   <button key={n} type="button" aria-pressed={(sub.span ?? 1) === n} onClick={() => p.onSpan(n)}>{n} column{n > 1 ? 's' : ''}</button>
                 ))}
               </div>

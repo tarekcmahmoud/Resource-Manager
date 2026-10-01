@@ -28,7 +28,7 @@ type DBlock =
   | { id: string; kind: 'quote'; text: string; attr: string };
 type Kind = DBlock['kind'];
 export type Draft = {
-  variant: 'quick' | 'extended'; type: SubType; span: 1 | 2; title: string; source: string; notes: string;
+  variant: 'quick' | 'extended'; type: SubType; span: 1 | 2 | 3; title: string; source: string; notes: string;
   tags: string[]; boards: string[]; blocks: DBlock[];
 };
 
@@ -436,7 +436,7 @@ export function SubmissionForm(p: Props) {
             </Sect>
             <Sect n="" title="Width on the wall">
               <div className={`${s.seg} ${s.segWide}`} role="group" aria-label="Width on the wall">
-                {([1, 2] as const).map((n) => (
+                {([1, 2, 3] as const).map((n) => (
                   <button key={n} type="button" aria-pressed={d.span === n} onClick={() => set({ span: n })}>{n} column{n > 1 ? 's' : ''}</button>
                 ))}
               </div>

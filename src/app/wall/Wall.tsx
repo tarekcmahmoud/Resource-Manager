@@ -142,7 +142,7 @@ export function Wall({ initial, initialUrls, userId, bookmarkBoards }: {
     write('the change', db.from('submissions').update({ archived, updated_at: new Date().toISOString() }).eq('id', sub.id));
   }
 
-  function setSpan(sub: Submission, span: 1 | 2) {
+  function setSpan(sub: Submission, span: 1 | 2 | 3) {
     setSubs((x) => x.map((y) => (y.id === sub.id ? { ...y, span } : y)));
     write('the width', db.from('submissions').update({ span, updated_at: new Date().toISOString() }).eq('id', sub.id));
   }

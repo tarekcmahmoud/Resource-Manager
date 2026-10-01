@@ -18,7 +18,7 @@ export type Block =
 export type Submission = {
   id: string; type: SubType; title: string; source: string; notes: string;
   tags: string[]; boards: string[]; blocks: Block[]; archived: boolean;
-  span: 1 | 2; // wall columns the card spans
+  span: 1 | 2 | 3; // wall columns the card spans
   saved_at: string; updated_at: string;
 };
 
